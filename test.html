@@ -377,14 +377,9 @@ BAL +113
       alert('Worker URL saved successfully!');
     }
 
-    function getWorkerUrl() {
-      const url = document.getElementById('workerUrl').value.trim() || localStorage.getItem('dotd-worker-url');
-      if (!url) {
-        alert('Please enter and save your Cloudflare Worker URL first');
-        return null;
-      }
-      return url;
-    }
+function getWorkerUrl() {
+  return WORKER_URL;
+}
 
     function openTab(tabName) {
       const tabContents = document.getElementsByClassName("tab-content");

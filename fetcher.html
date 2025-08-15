@@ -3,78 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Poll Data Viewer</title>
+    <title>DOTD Data Fetcher</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             max-width: 800px;
             margin: 50px auto;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: #000000;
+            color: #ffffff;
         }
         .container {
-            background: white;
+            background: #1a1a1a;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
         input, button {
             padding: 10px;
             margin: 5px;
-            border: 1px solid #ddd;
+            border: 1px solid #444;
             border-radius: 5px;
+            background-color: #2a2a2a;
+            color: #ffffff;
+        }
+        input:focus {
+            outline: none;
+            border-color: #8a2be2;
         }
         button {
-            background-color: #007bff;
+            background-color: #8a2be2;
             color: white;
             cursor: pointer;
+            border: 1px solid #8a2be2;
         }
         button:hover {
-            background-color: #0056b3;
+            background-color: #7b1fa2;
         }
         .poll-option {
             margin: 10px 0;
             padding: 10px;
-            background-color: #f8f9fa;
+            background-color: #2a2a2a;
             border-radius: 5px;
+            border: 1px solid #333;
         }
         .team-odds {
             font-weight: bold;
             font-size: 18px;
+            color: #ffffff;
         }
         .percentage-count {
-            color: #666;
+            color: #bbbbbb;
             margin-top: 5px;
         }
         .error {
-            color: red;
+            color: #ff6b6b;
             margin: 10px 0;
         }
         .loading {
-            color: #007bff;
+            color: #8a2be2;
             margin: 10px 0;
         }
         .saved-polls {
             margin-top: 30px;
             padding-top: 20px;
-            border-top: 1px solid #ddd;
+            border-top: 1px solid #444;
         }
         .saved-poll-item {
             display: inline-block;
             margin: 5px;
             padding: 5px 10px;
-            background-color: #e9ecef;
+            background-color: #333333;
             border-radius: 3px;
             cursor: pointer;
+            color: #ffffff;
+            border: 1px solid #444;
         }
         .saved-poll-item:hover {
-            background-color: #dee2e6;
+            background-color: #444444;
+            border-color: #8a2be2;
+        }
+        h1, h2, h3 {
+            color: #ffffff;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Poll Data Viewer</h1>
+        <h1>DOTD Data Fetcher</h1>
         
         <div>
             <input type="text" id="pollId" placeholder="Enter Poll ID (ex. 271263)" value="">

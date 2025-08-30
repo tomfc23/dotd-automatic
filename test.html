@@ -415,7 +415,7 @@ BAL +113
     <br />
     <label>
       <input type="checkbox" id="globalNoVigCheckbox" onchange="toggleFavoriteInputs()" />
-      Using No-Vig Odds for ALL?
+      Using No-Vig Odds for ALL? (calculates favorite odds from underdog odds)
     </label>
     <br /><br />
     <label>
@@ -824,20 +824,12 @@ BAL +113
         for (let i = 0; i < count; i++) {
           if (shortenedMode && i < 6) continue;
           if (i < teamsData.length) {
-            const odds = teamsData[i].odds;
-            let oddsValue;
-            if (selectedSport === 'CFB') {
-              // For CFB, odds might be spread values like +23.5
-              oddsValue = parseFloat(odds.replace("+", ""));
-            } else {
-              // For MLB, odds are integers like +104
-              oddsValue = parseInt(odds.replace("+", ""));
-            }
             document.getElementById(`placementInput${i}`).value = Math.min(i + 1, 10);
             if (selectedSport === 'MLB') {
+              const odds = teamsData[i].odds;
+              const oddsValue = parseInt(odds.replace("+", ""));
               document.getElementById(`realOddsInput${i}`).value = oddsValue;
             }
-            document.getElementById(`underdogOddsInput${i}`).value = oddsValue;
             const teamHeader = document.getElementById(`teamHeader${i}`);
             if (teamHeader) {
               teamHeader.textContent = teamsData[i].displayTeam;
@@ -876,9 +868,9 @@ BAL +113
           <div class="team-header" id="teamHeader${i}"></div>
           <input id="placementInput${i}" type="number" placeholder="Enter option placement (ex. 2)"><br>
           ${realOddsInput}
-          <input id="underdogOddsInput${i}" type="number" placeholder="Enter underdog's odds"><br>
+          <input id="underdogOddsInput${i}" type="number" placeholder="Enter underdog sportsbook odds"><br>
           <div id="divFavoriteOddsInput${i}">
-            <input id="favoriteOddsInput${i}" type="number" placeholder="Enter favorite's odds"><br>
+            <input id="favoriteOddsInput${i}" type="number" placeholder="Enter favorite sportsbook odds"><br>
           </div>
           <button onclick="calculateEV(${i})">Calculate</button>
           <button id="clearButton" onclick="clearInputs(${i})">Clear</button>

@@ -178,6 +178,23 @@
       width: 200px;
       margin-right: 10px;
     }
+    .sport-selection {
+      margin: 20px auto;
+      padding: 15px;
+      background-color: #1a1a1a;
+      border-radius: 15px;
+      border: 1px solid #444;
+      max-width: 600px;
+    }
+    .sport-select {
+      padding: 10px 15px;
+      font-size: 16px;
+      background-color: #333;
+      color: lightgray;
+      border: 2px solid #555;
+      border-radius: 15px;
+      cursor: pointer;
+    }
     .info-section {
       margin: 15px auto;
       max-width: 600px;
@@ -302,6 +319,15 @@
   <a href="formatter.html" target="_blank">Formatter</a>
   <a href="help-dotd.html">How to use</a><br />
 
+  <!-- Sport Selection -->
+  <div class="sport-selection">
+    <h3>🏈⚾ Sport Selection</h3>
+    <select id="sportSelect" class="sport-select" onchange="onSportChange()">
+      <option value="MLB">MLB</option>
+      <option value="CFB">CFB</option>
+    </select>
+  </div>
+
   <!-- Odds Sorter Tab -->
   <div id="sorterTab" class="tab-content active">
     <!-- Poll ID Input Section -->
@@ -389,7 +415,7 @@ BAL +113
     <br />
     <label>
       <input type="checkbox" id="globalNoVigCheckbox" onchange="toggleFavoriteInputs()" />
-      Using No-Vig Odds for ALL?
+      Using No-Vig Odds for ALL? (calculates favorite odds from underdog odds)
     </label>
     <br /><br />
     <label>
@@ -445,6 +471,7 @@ BAL +113
   <script>
     let teamsData = [];
     let shortenedMode = false;
+    let selectedSport = 'MLB';
 
     window.addEventListener('DOMContentLoaded', function() {
       const shortenedBox = document.getElementById("shortenedModeToggle");
@@ -455,6 +482,19 @@ BAL +113
       checkShortenedModeEligibility();
       generateCalculators();
     });
+
+    function onSportChange() {
+      selectedSport = document.getElementById('sportSelect').value;
+      // Update placeholder text based on sport
+      const textarea = document.getElementById('inputData');
+      if (selectedSport === 'CFB') {
+        textarea.placeholder = "Paste the data below or use the Poll Data Fetcher above. The format should be like:\nUTSA +23.5\n3% (147)\nUND +25.5\n2% (71)\n...";
+      } else {
+        textarea.placeholder = "Paste the data below or use the Poll Data Fetcher above. The format should be like:\nPHI +104\n8% (563)\nBAL +113\n3% (241)\n...";
+      }
+      // Regenerate calculators to show/hide Real odds input based on sport
+      generateCalculators();
+    }
 
     function toggleInfo() {
       const infoContent = document.getElementById('infoContent');
@@ -546,19 +586,37 @@ BAL +113
           }
           const teamLine = lines[i].trim();
           const oddsLine = lines[i + 1].trim();
-          const teamMatch = teamLine.match(/^(\S+)\s+([+-]\d+)$/);
-          if (!teamMatch) {
-            warnings.push(
-              `Invalid team/odds format at line ${i + 1}: "${teamLine}". Expected format: "TEAM +/-###"`
-            );
-            continue;
+          
+          // For CFB, team line should just be team name + spread (no odds)
+          let teamMatch, team, odds;
+          if (selectedSport === 'CFB') {
+            // Match format like "UTSA +23.5" or "UND +25.5"
+            teamMatch = teamLine.match(/^(\S+)\s+([+-][\d.]+)$/);
+            if (!teamMatch) {
+              warnings.push(
+                `Invalid team/spread format at line ${i + 1}: "${teamLine}". Expected format: "TEAM +/-##.#"`
+              );
+              continue;
+            }
+            team = teamMatch[1];
+            odds = teamMatch[2]; // This is actually the spread, but we'll store it as odds for consistency
+          } else {
+            // MLB format: "TEAM +/-###"
+            teamMatch = teamLine.match(/^(\S+)\s+([+-]\d+)$/);
+            if (!teamMatch) {
+              warnings.push(
+                `Invalid team/odds format at line ${i + 1}: "${teamLine}". Expected format: "TEAM +/-###"`
+              );
+              continue;
+            }
+            team = teamMatch[1];
+            odds = teamMatch[2];
+            const oddsValue = parseInt(odds);
+            if (isNaN(oddsValue) || oddsValue < -999 || oddsValue > 999) {
+              warnings.push(`Suspicious odds value for ${team}: ${odds}. Please verify.`);
+            }
           }
-          const team = teamMatch[1];
-          const odds = teamMatch[2];
-          const oddsValue = parseInt(odds);
-          if (isNaN(oddsValue) || oddsValue < -999 || oddsValue > 999) {
-            warnings.push(`Suspicious odds value for ${team}: ${odds}. Please verify.`);
-          }
+
           let percentageMatch = oddsLine.match(/(\d+)%\s*\(([^)]+)\)/);
           if (!percentageMatch) {
             percentageMatch = oddsLine.match(/(\d+)%.*?\((\d+[k]?)\)/);
@@ -766,10 +824,12 @@ BAL +113
         for (let i = 0; i < count; i++) {
           if (shortenedMode && i < 6) continue;
           if (i < teamsData.length) {
-            const odds = teamsData[i].odds;
-            const oddsValue = parseInt(odds.replace("+", ""));
             document.getElementById(`placementInput${i}`).value = Math.min(i + 1, 10);
-            document.getElementById(`realOddsInput${i}`).value = oddsValue;
+            if (selectedSport === 'MLB') {
+              const odds = teamsData[i].odds;
+              const oddsValue = parseInt(odds.replace("+", ""));
+              document.getElementById(`realOddsInput${i}`).value = oddsValue;
+            }
             const teamHeader = document.getElementById(`teamHeader${i}`);
             if (teamHeader) {
               teamHeader.textContent = teamsData[i].displayTeam;
@@ -778,6 +838,7 @@ BAL +113
         }
       }, 100);
     }
+    
     function generateCalculators() {
       const count = Number(document.getElementById("calcCountSelect").value);
       const container = document.getElementById("calculatorContainer");
@@ -796,14 +857,20 @@ BAL +113
         if (shortenedMode && i < 6) continue;
         const section = document.createElement("div");
         section.className = "calculator-section";
+        
+        let realOddsInput = '';
+        if (selectedSport === 'MLB') {
+          realOddsInput = '<input id="realOddsInput' + i + '" type="number" placeholder="Enter Real\'s Underdog Odds"><br>';
+        }
+        
         section.innerHTML = `
           <h3>Bet ${i + 1}</h3>
           <div class="team-header" id="teamHeader${i}"></div>
           <input id="placementInput${i}" type="number" placeholder="Enter option placement (ex. 2)"><br>
-          <input id="realOddsInput${i}" type="number" placeholder="Enter Real's Underdog Odds"><br>
-          <input id="underdogOddsInput${i}" type="number" placeholder="Enter underdog's odds"><br>
+          ${realOddsInput}
+          <input id="underdogOddsInput${i}" type="number" placeholder="Enter underdog sportsbook odds"><br>
           <div id="divFavoriteOddsInput${i}">
-            <input id="favoriteOddsInput${i}" type="number" placeholder="Enter favorite's odds"><br>
+            <input id="favoriteOddsInput${i}" type="number" placeholder="Enter favorite sportsbook odds"><br>
           </div>
           <button onclick="calculateEV(${i})">Calculate</button>
           <button id="clearButton" onclick="clearInputs(${i})">Clear</button>
@@ -815,7 +882,9 @@ BAL +113
         if (shortenedMode && i < 6) continue;
         if (savedValues[i]) {
           document.getElementById(`placementInput${i}`).value = savedValues[i].placement;
-          document.getElementById(`realOddsInput${i}`).value = savedValues[i].realOdds;
+          if (selectedSport === 'MLB') {
+            document.getElementById(`realOddsInput${i}`).value = savedValues[i].realOdds;
+          }
           document.getElementById(`underdogOddsInput${i}`).value = savedValues[i].underdogOdds;
           document.getElementById(`favoriteOddsInput${i}`).value = savedValues[i].favoriteOdds;
           document.getElementById(`teamHeader${i}`).textContent = savedValues[i].teamHeader;
@@ -843,7 +912,21 @@ BAL +113
       const underdogOdds = Number(document.getElementById(`underdogOddsInput${index}`)?.value);
       let placement = Number(document.getElementById(`placementInput${index}`)?.value);
       placement = placement > 10 ? 10 : placement;
-      const realOdds = Number(document.getElementById(`realOddsInput${index}`)?.value);
+      
+      let payout;
+      if (selectedSport === 'CFB') {
+        // For CFB: payout = placement * 20
+        payout = placement * 20;
+      } else {
+        // For MLB: use the original formula with Real odds
+        const realOdds = Number(document.getElementById(`realOddsInput${index}`)?.value);
+        if (realOdds < 0) {
+          payout = Math.round(placement * 20 + (100 / (Math.abs(realOdds) / 100)));
+        } else {
+          payout = Math.round(placement * 20 + realOdds);
+        }
+      }
+
       const useNoVig = document.getElementById("globalNoVigCheckbox").checked;
       let favoriteOdds = useNoVig
         ? -1 * underdogOdds
@@ -862,14 +945,6 @@ BAL +113
       const ipTotal = favoriteIP + underdogIP;
       const novigUnderdogIP = underdogIP / ipTotal;
 
-     let payout;
-if (realOdds < 0) {
-  payout = Math.round(placement * 20 + (100 / (Math.abs(realOdds) / 100)));
-} else {
-  payout = Math.round(placement * 20 + realOdds);
-}
-
-
       const expectedValue = payout * novigUnderdogIP;
       const hitProbPercent = novigUnderdogIP * 100;
 
@@ -887,7 +962,9 @@ if (realOdds < 0) {
       document.getElementById(`underdogOddsInput${index}`).value = "";
       document.getElementById(`favoriteOddsInput${index}`).value = "";
       document.getElementById(`placementInput${index}`).value = "";
-      document.getElementById(`realOddsInput${index}`).value = "";
+      if (selectedSport === 'MLB') {
+        document.getElementById(`realOddsInput${index}`).value = "";
+      }
       document.getElementById(`resultsOutput${index}`).textContent = "";
     }
 
@@ -983,10 +1060,20 @@ if (realOdds < 0) {
     function displayPollResults(options) {
         const totalVotes = options.reduce((sum, option) => sum + option.count, 0);
 
-        const textOutput = options.map(option => {
-            const percentage = Math.round((option.count / totalVotes) * 100);
-            return `${option.label} ${option.odds}\n${percentage}% (${option.count})`;
-        }).join('\n');
+        let textOutput;
+        if (selectedSport === 'CFB') {
+            // For CFB: don't include odds, just team and spread
+            textOutput = options.map(option => {
+                const percentage = Math.round((option.count / totalVotes) * 100);
+                return `${option.label}\n${percentage}% (${option.count})`;
+            }).join('\n');
+        } else {
+            // For MLB: include odds as before
+            textOutput = options.map(option => {
+                const percentage = Math.round((option.count / totalVotes) * 100);
+                return `${option.label} ${option.odds}\n${percentage}% (${option.count})`;
+            }).join('\n');
+        }
 
         document.getElementById('inputData').value = textOutput;
     }

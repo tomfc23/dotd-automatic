@@ -915,8 +915,8 @@ BAL +113
       
       let payout;
       if (selectedSport === 'CFB') {
-        // For CFB: payout = placement * 20
-        payout = placement * 20;
+        // For CFB: payout = 100 + placement * 20
+        payout = 100 + (placement * 20);
       } else {
         // For MLB: use the original formula with Real odds
         const realOdds = Number(document.getElementById(`realOddsInput${index}`)?.value);

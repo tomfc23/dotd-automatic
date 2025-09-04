@@ -417,14 +417,6 @@ BAL +113
       Using No-Vig Odds for ALL? (calculates favorite odds from underdog odds)
     </label>
     <br /><br />
-    <label>
-      <input type="checkbox" id="shortenedModeToggle" onchange="toggleShortenedMode()">
-      Shortened Mode (must have at least 10 bets)
-    </label>      
-    <div id="shortenedModeMsg" style="color:#ffd166; margin-bottom:10px; display:none;">
-      Only bets with placement 7 or higher are shown.
-    </div>
-    <br>
     <div id="calculatorContainer"></div>
     <div class="calculator-actions">
       <button id="calculateAllButton" onclick="calculateAllEVs()">Calculate All</button>
@@ -469,16 +461,9 @@ BAL +113
 
   <script>
     let teamsData = [];
-    let shortenedMode = false;
     let selectedSport = 'MLB';
 
     window.addEventListener('DOMContentLoaded', function() {
-      const shortenedBox = document.getElementById("shortenedModeToggle");
-      const msg = document.getElementById("shortenedModeMsg");
-      if (shortenedBox) shortenedBox.checked = false;
-      shortenedMode = false;
-      if (msg) msg.style.display = "none";
-      checkShortenedModeEligibility();
       generateCalculators();
     });
 
@@ -527,28 +512,6 @@ BAL +113
           buttons[i].classList.add("active");
         }
       }
-    }
-
-    function checkShortenedModeEligibility() {
-      const shortenedBox = document.getElementById("shortenedModeToggle");
-      const count = Number(document.getElementById("calcCountSelect").value);
-      if (shortenedBox) {
-        if (count < 10) {
-          shortenedBox.checked = false;
-          shortenedBox.disabled = true;
-          shortenedMode = false;
-          document.getElementById("shortenedModeMsg").style.display = "none";
-        } else {
-          shortenedBox.disabled = false;
-          document.getElementById("shortenedModeMsg").textContent = "Only bets with placement 7 or higher are shown.";
-        }
-      }
-    }
-    function toggleShortenedMode() {
-      const shortenedBox = document.getElementById("shortenedModeToggle");
-      shortenedMode = shortenedBox && shortenedBox.checked;
-      generateCalculators();
-      document.getElementById("shortenedModeMsg").style.display = shortenedMode ? "block" : "none";
     }
 
     function clearData() {
@@ -811,17 +774,12 @@ BAL +113
         alert("No valid data to use. Please process your data first.");
         return;
       }
-      if (teamsData.length < 8) {
-        alert("You need at least 8 teams to use the shortened mode.");
-        return;
-      }
       const count = Math.min(teamsData.length, 20);
       document.getElementById("calcCountSelect").value = count;
       openTab("calculatorTab");
       generateCalculators();
       setTimeout(() => {
         for (let i = 0; i < count; i++) {
-          if (shortenedMode && i < 6) continue;
           if (i < teamsData.length) {
             document.getElementById(`placementInput${i}`).value = Math.min(i + 1, 10);
             if (selectedSport === 'MLB') {
@@ -853,7 +811,6 @@ BAL +113
       }
       container.innerHTML = "";
       for (let i = 0; i < count; i++) {
-        if (shortenedMode && i < 6) continue;
         const section = document.createElement("div");
         section.className = "calculator-section";
         
@@ -878,7 +835,6 @@ BAL +113
         container.appendChild(section);
       }
       for (let i = 0; i < count; i++) {
-        if (shortenedMode && i < 6) continue;
         if (savedValues[i]) {
           document.getElementById(`placementInput${i}`).value = savedValues[i].placement;
           if (selectedSport === 'MLB') {
@@ -890,10 +846,8 @@ BAL +113
         }
       }
       toggleFavoriteInputs();
-      checkShortenedModeEligibility();
     }
     document.getElementById("calcCountSelect").addEventListener("change", function() {
-      checkShortenedModeEligibility();
       generateCalculators();
     });
     function toggleFavoriteInputs() {
@@ -971,7 +925,6 @@ BAL +113
       const count = Number(document.getElementById("calcCountSelect").value);
       let results = [];
       for (let i = 0; i < count; i++) {
-        if (shortenedMode && i < 6) continue;
         results.push(calculateEV(i));
       }
       if (!results.length) return;
@@ -991,7 +944,6 @@ BAL +113
       const count = Number(document.getElementById("calcCountSelect").value);
       let results = [];
       for (let i = 0; i < count; i++) {
-        if (shortenedMode && i < 6) continue;
         results.push(calculateEV(i));
       }
       results.sort((a, b) => b.ev - a.ev);
